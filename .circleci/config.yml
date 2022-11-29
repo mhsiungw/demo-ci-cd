@@ -1,23 +1,39 @@
 version: 2.1
 orbs:
+  # import an orb named aws-s3, which contains tools needed to send files to the S3 bucket.
   aws-s3: circleci/aws-s3@1.0.4
 jobs:
+  # name of the job
   build:
+    # use the docker directive to define which container will be used to build the app.
     docker:
       - image: circleci/python:2.7-node
+    # the environment variableds AWS needs to run  
     environment:
       AWS_REGION: us-east-1
     steps:
+      # grab the source code from the repository
       - checkout
       - run: npm install
       - run: npm run build
+      - run:
+          name: "print out $AWS_ACCESS_KEY_ID"
+          command: echo ${AWS_ACCESS_KEY_ID}
+      - run:
+          name: "print out $AWS_SECRET_ACCESS_KEY"
+          command: echo ${AWS_SECRET_ACCESS_KEY}
+      - run:
+          name: "print out nothing"
+          command: echo ${AWS_SECRET_ACCESS_KEY_TEMP}
+      # deploy the content of the dist directory (from) in the given S3 bucket (to)
       - aws-s3/sync:
           from: dist
-          to: 's3://demo-ci-cd-article/'
+          to: 's3://demo-ci-cd/'
           arguments: |
             --acl public-read \
             --cache-control "max-age=86400" \
           overwrite: true
+# workflow is a ground of jobs that start together          
 workflows:
   version: 2.1
   build:
